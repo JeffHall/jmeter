@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.jmeter.assertions.AssertionResult;
 import org.apache.jmeter.gui.Searchable;
+import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.threads.JMeterContext.TestLogicalAction;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.util.JOrphanUtils;
@@ -96,7 +97,9 @@ public class SampleResult implements Serializable, Cloneable, Searchable {
      * @see #setDataType(java.lang.String)
      */
     public static final String BINARY = "bin"; // $NON-NLS-1$
-    
+
+    private static final boolean DISABLE_SUBRESULTS_RENAMING = JMeterUtils.getPropDefault("subresults.disable_renaming", false);
+
     // List of types that are known to be binary
     private static final String[] BINARY_TYPES = {
         "image/",       //$NON-NLS-1$
@@ -267,6 +270,8 @@ public class SampleResult implements Serializable, Cloneable, Searchable {
     private URL location;
 
     private transient boolean ignore;
+    
+    private transient int subResultIndex;
 
     /**
      * Cache for responseData as string to avoid multiple computations
@@ -450,7 +455,7 @@ public class SampleResult implements Serializable, Cloneable, Searchable {
     public long currentTimeInMillis() {
         if (useNanoTime){
             if (nanoTimeOffset == Long.MIN_VALUE){
-                throw new RuntimeException("Invalid call; nanoTimeOffset as not been set");
+                throw new RuntimeException("Invalid call; nanoTimeOffset has not been set");
             }
             return sampleNsClockInMs() + nanoTimeOffset;            
         }
@@ -612,6 +617,25 @@ public class SampleResult implements Serializable, Cloneable, Searchable {
      *            the {@link SampleResult} to be added
      */
     public void addSubResult(SampleResult subResult) {
+        addSubResult(subResult, isRenameSampleLabel());
+    }
+
+    /**
+     * see https://bz.apache.org/bugzilla/show_bug.cgi?id=63055
+     * @return true if TestPlan is in functional mode or property subresults.disable_renaming is true
+     */
+    protected final boolean isRenameSampleLabel() {
+        return !(TestPlan.getFunctionalMode() || DISABLE_SUBRESULTS_RENAMING);
+    }
+
+    /**
+     * Add a subresult and adjust the parent byte count and end-time.
+     * 
+     * @param subResult
+     *            the {@link SampleResult} to be added
+     * @param renameSubResults boolean do we rename subResults based on position
+     */
+    public void addSubResult(SampleResult subResult, boolean renameSubResults) {
         if(subResult == null) {
             // see https://bz.apache.org/bugzilla/show_bug.cgi?id=54778
             return;
@@ -630,7 +654,7 @@ public class SampleResult implements Serializable, Cloneable, Searchable {
         setSentBytes(getSentBytes() + subResult.getSentBytes());
         setHeadersSize(getHeadersSize() + subResult.getHeadersSize());
         setBodySize(getBodySizeAsLong() + subResult.getBodySizeAsLong());
-        addRawSubResult(subResult);
+        addRawSubResult(subResult, renameSubResults);
     }
     
     /**
@@ -640,7 +664,17 @@ public class SampleResult implements Serializable, Cloneable, Searchable {
      *            the {@link SampleResult} to be added
      */
     public void addRawSubResult(SampleResult subResult){
-        storeSubResult(subResult);
+        storeSubResult(subResult, isRenameSampleLabel());
+    }
+    
+    /**
+     * Add a subresult to the collection without updating any parent fields.
+     * 
+     * @param subResult
+     *            the {@link SampleResult} to be added
+     */
+    private void addRawSubResult(SampleResult subResult, boolean renameSubResults){
+        storeSubResult(subResult, renameSubResults);
     }
 
     /**
@@ -654,8 +688,26 @@ public class SampleResult implements Serializable, Cloneable, Searchable {
      *            the {@link SampleResult} to be added
      */
     public void storeSubResult(SampleResult subResult) {
+        storeSubResult(subResult, isRenameSampleLabel());
+    }
+    
+    /**
+     * Add a subresult read from a results file.
+     * <p>
+     * As for {@link SampleResult#addSubResult(SampleResult)
+     * addSubResult(SampleResult)}, except that the fields don't need to be
+     * accumulated
+     *
+     * @param subResult
+     *            the {@link SampleResult} to be added
+     * @param renameSubResults boolean do we rename subResults based on position
+     */
+    private void storeSubResult(SampleResult subResult, boolean renameSubResults) {
         if (subResults == null) {
             subResults = new ArrayList<>();
+        }
+        if(renameSubResults) {
+            subResult.setSampleLabel(getSampleLabel()+"-"+subResultIndex++);
         }
         subResults.add(subResult);
         subResult.setParent(this);

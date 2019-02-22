@@ -87,6 +87,9 @@
   <!-- Minimal version of Apache Ant required by this Ant script -->
   <property name="ant.version.required" value="1.9.1" />
 
+  <!-- check if JavaFX is available -->
+  <available classname="javafx.application.Platform" property="javafx.present" />
+
   <!-- Are we running under Gump? -->
   <property name="gump.run" value="false"/>
 
@@ -404,6 +407,7 @@
     <include name="${lib.dir}/${commons-math3.jar}"/>
     <include name="${lib.dir}/${commons-net.jar}"/>
     <include name="${lib.dir}/${commons-pool2.jar}"/>
+    <include name="${lib.dir}/${commons-text.jar}"/>
     <include name="${lib.dir}/${darcula.jar}"/>
     <include name="${lib.dir}/${dnsjava.jar}"/>
     <include name="${lib.dir}/${freemarker.jar}"/>
@@ -416,6 +420,9 @@
     <include name="${lib.dir}/${httpcore-nio.jar}"/>
     <include name="${lib.dir}/${httpmime.jar}"/>
     <include name="${lib.dir}/${jakarta-oro.jar}"/>
+    <include name="${lib.dir}/${jackson-annotations.jar}"/>
+    <include name="${lib.dir}/${jackson-core.jar}"/>
+    <include name="${lib.dir}/${jackson-databind.jar}"/>
     <include name="${lib.dir}/${javamail.jar}"/>
     <include name="${lib.dir}/${jcharts.jar}"/>
     <include name="${lib.dir}/${jcl-over-slf4j.jar}"/>
@@ -440,7 +447,6 @@
     <include name="${lib.dir}/${rsyntaxtextarea.jar}"/>
     <include name="${lib.dir}/${serializer.jar}"/>
     <include name="${lib.dir}/${slf4j-api.jar}"/>
-    <include name="${lib.dir}/${slf4j-ext.jar}"/>
     <include name="${lib.dir}/${log4j-api.jar}"/>
     <include name="${lib.dir}/${jtidy.jar}"/>
     <include name="${lib.dir}/${tika-core.jar}"/>
@@ -490,6 +496,7 @@
     <pathelement location="${lib.dir}/${commons-math3.jar}"/>
     <pathelement location="${lib.dir}/${commons-net.jar}"/>
     <pathelement location="${lib.dir}/${commons-pool2.jar}"/>
+    <pathelement location="${lib.dir}/${commons-text.jar}"/>
     <pathelement location="${lib.dir}/${darcula.jar}"/>
     <pathelement location="${lib.dir}/${dnsjava.jar}"/>
     <pathelement location="${lib.dir}/${freemarker.jar}"/>
@@ -502,6 +509,9 @@
     <pathelement location="${lib.dir}/${httpcore-nio.jar}"/>
     <pathelement location="${lib.dir}/${httpmime.jar}"/>
     <pathelement location="${lib.dir}/${jakarta-oro.jar}"/>
+    <pathelement location="${lib.dir}/${jackson-annotations.jar}"/>
+    <pathelement location="${lib.dir}/${jackson-core.jar}"/>
+    <pathelement location="${lib.dir}/${jackson-databind.jar}"/>
     <pathelement location="${lib.dir}/${javamail.jar}"/>
     <pathelement location="${lib.dir}/${jcharts.jar}"/>
     <pathelement location="${lib.dir}/${jms.jar}"/>
@@ -525,7 +535,6 @@
     <pathelement location="${lib.dir}/${rsyntaxtextarea.jar}"/>
     <pathelement location="${lib.dir}/${serializer.jar}"/>
     <pathelement location="${lib.dir}/${slf4j-api.jar}"/>
-    <pathelement location="${lib.dir}/${slf4j-ext.jar}"/>
     <pathelement location="${lib.dir}/${spock-core.jar}"/>
     <pathelement location="${lib.dir}/${cglib-nodep.jar}"/>
     <pathelement location="${lib.dir}/${objenesis.jar}"/>
@@ -583,7 +592,7 @@
       JMeter version
       This is overridden for formal releases.
     -->
-    <property name="jmeter.version" value="4.1-SNAPSHOT"/>
+    <property name="jmeter.version" value="5.1-SNAPSHOT"/>
     <!-- Remember to change "docversion" below if necessary -->
     <condition property="implementation.version"
           value="${jmeter.version} r${svn.revision}" else="${jmeter.version}.${DSTAMP}">
@@ -665,6 +674,11 @@
         <path refid="logging.classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.core}" dest="${build.core}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-components" depends="compile-jorphan,compile-core" description="Compile generic (protocol-independent) components.">
@@ -672,12 +686,18 @@
     <javac srcdir="${src.components}" destdir="${build.components}" source="${src.java.version}" optimize="${optimize}" debug="on" target="${target.java.version}"
            includeAntRuntime="${includeAntRuntime}" deprecation="${deprecation}" encoding="${encoding}">
       <include name="**/*.java"/>
+      <exclude name="**/visualizers/RenderInBrowser.java" unless="javafx.present"/>
       <classpath>
         <pathelement location="${build.jorphan}"/>
         <pathelement location="${build.core}"/>
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.components}" dest="${build.components}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-functions" depends="compile-jorphan,compile-core" description="Compile functions.">
@@ -691,6 +711,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.functions}" dest="${build.functions}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-http" depends="compile-jorphan,compile-core,compile-components" description="Compile components specific to HTTP sampling.">
@@ -709,6 +734,11 @@
         <pathelement location="${lib.dir}/${log4j-core.jar}"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.http}" dest="${build.http}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <!-- Tests need main classes -->
@@ -737,6 +767,11 @@
         <path refid="logging.classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.test}" dest="${build.test}" includes="**/*.properties" encoding="UTF-8"/>
 
     <!-- Compile Spock tests (groovy) -->
     <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc">
@@ -779,6 +814,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.ftp}" dest="${build.ftp}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-jdbc" depends="compile-jorphan,compile-core" description="Compile components specific to JDBC sampling.">
@@ -792,6 +832,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.jdbc}" dest="${build.jdbc}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-ldap" depends="compile-jorphan,compile-core"
@@ -806,6 +851,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.ldap}" dest="${build.ldap}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="create-mail-dir">
@@ -823,6 +873,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.mail}" dest="${build.mail}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-java" depends="compile-jorphan,compile-core" description="Compile components specific to Java sampling.">
@@ -836,6 +891,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.java}" dest="${build.java}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-junit" depends="compile-jorphan,compile-core" description="Compile components specific to JUnit sampling.">
@@ -849,6 +909,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.junit}" dest="${build.junit}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-tcp" depends="compile-jorphan,compile-core" description="Compile components specific to TCP sampling.">
@@ -862,6 +927,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.tcp}" dest="${build.tcp}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-protocols" depends="compile-http,compile-ftp,compile-jdbc,compile-java,compile-ldap,compile-mail,compile-tcp" description="Compile all protocol-specific components."/>
@@ -877,6 +947,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.examples}" dest="${build.examples}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-jorphan" depends="init-version" description="Compile JOrphan utility classes.">
@@ -888,6 +963,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.jorphan}" dest="${build.jorphan}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-jms" depends="compile-jorphan,compile-core,compile-components"
@@ -902,6 +982,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.jms}" dest="${build.jms}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-native" depends="compile-jorphan,compile-core,compile-components"
@@ -916,6 +1001,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.native}" dest="${build.native}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile-mongodb" depends="compile-jorphan,compile-core,compile-components"
@@ -930,6 +1020,11 @@
         <path refid="classpath"/>
       </classpath>
     </javac>
+
+    <!-- Convert the message files from UTF-8 to ASCII. This can be removed
+    after upgrading to Java 9+ as the minimum JRE and specifying the encoding
+    when loading the ResourceBundles -->
+    <native2ascii src="${src.mongodb}" dest="${build.mongodb}" includes="**/*.properties" encoding="UTF-8"/>
   </target>
 
   <target name="compile"
@@ -944,6 +1039,8 @@
       <classpath>
         <pathelement location="${dest.jar.jmeter}/ApacheJMeter.jar"/>
       </classpath>
+      <jvmarg value="-Xss256k"/>
+      <jvmarg value="-XX:MaxMetaspaceSize=256m"/>
       <jvmarg value="${jacoco_params}run_gui:java(server)"/>
       <sysproperty key="jmeter.home" value="${basedir}"/>
     </java>
@@ -1048,11 +1145,12 @@ run JMeter unless all the JMeter jars are added.
         excludes="**/BeanShellClient*.class,**/NewDriver*,**/DynamicClassLoader*"/>
       <fileset dir="${src.core}" includes="org/apache/jmeter/images/**"
         excludes="**/*.properties,org/apache/jmeter/images/toolbar/icons-custom/**"/>
-      <fileset dir="${src.core}" includes="**/*.properties">
+      <fileset dir="${build.core}" includes="**/*.properties">
         <exclude name="*eucJP*"/>
       </fileset>
-      <fileset dir="${src.core}" includes="**/*.xml">
-      </fileset>
+      <fileset dir="${src.core}" includes="**/*.xml" />
+      <fileset dir="${src.core}" includes="**/*.xsl" />
+      <fileset dir="${src.core}" includes="**/*.dtd" />
       <!-- This file is used by the jmeter -h option -->
       <fileset dir="${src.core}" includes="org/apache/jmeter/help.txt"/>
     </jar>
@@ -1064,7 +1162,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.components}" includes="**/*.class" />
-      <fileset dir="${src.components}" includes="**/*.properties" />
+      <fileset dir="${build.components}" includes="**/*.properties" />
     </jar>
 
     <!-- functions -->
@@ -1074,7 +1172,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.functions}" includes="**/*.class" />
-      <fileset dir="${src.functions}" includes="**/*.properties" />
+      <fileset dir="${build.functions}" includes="**/*.properties" />
     </jar>
 
     <!-- http -->
@@ -1084,7 +1182,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.http}" includes="**/*.class"/>
-      <fileset dir="${src.http}" includes="**/*.properties" />
+      <fileset dir="${build.http}" includes="**/*.properties" />
     </jar>
 
     <!-- ftp -->
@@ -1094,7 +1192,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.ftp}" includes="**/*.class" />
-      <fileset dir="${src.ftp}" includes="**/*.properties" />
+      <fileset dir="${build.ftp}" includes="**/*.properties" />
     </jar>
 
     <!-- jdbc -->
@@ -1104,7 +1202,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.jdbc}" includes="**/*.class" />
-      <fileset dir="${src.jdbc}" includes="**/*.properties" />
+      <fileset dir="${build.jdbc}" includes="**/*.properties" />
     </jar>
 
     <!-- java -->
@@ -1114,7 +1212,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.java}" includes="**/*.class" />
-      <fileset dir="${src.java}" includes="**/*.properties" />
+      <fileset dir="${build.java}" includes="**/*.properties" />
     </jar>
 
     <!-- BeanShell Client -->
@@ -1136,7 +1234,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.junit}" includes="org/**/*.class" />
-      <fileset dir="${src.junit}" includes="**/*.properties" />
+      <fileset dir="${build.junit}" includes="**/*.properties" />
     </jar>
 
     <!-- Build junit/test.jar sample -->
@@ -1156,7 +1254,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.ldap}" includes="**/*.class" />
-      <fileset dir="${src.ldap}" includes="**/*.properties" />
+      <fileset dir="${build.ldap}" includes="**/*.properties" />
     </jar>
 
     <!-- mail -->
@@ -1166,7 +1264,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.mail}" includes="**/*.class"  />
-      <fileset dir="${src.mail}" includes="**/*.properties" />
+      <fileset dir="${build.mail}" includes="**/*.properties" />
       <fileset dir="${src.mail}" includes="**/*.providers" />
     </jar>
 
@@ -1177,7 +1275,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.tcp}" includes="**/*.class" />
-      <fileset dir="${src.tcp}" includes="**/*.properties" />
+      <fileset dir="${build.tcp}" includes="**/*.properties" />
     </jar>
 
     <!-- jms -->
@@ -1189,7 +1287,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.jms}" includes="**/*.class" />
-      <fileset dir="${src.jms}" includes="**/*.properties" />
+      <fileset dir="${build.jms}" includes="**/*.properties" />
     </jar>
 
     <!-- native -->
@@ -1201,7 +1299,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.native}" includes="**/*.class" />
-      <fileset dir="${src.native}" includes="**/*.properties" />
+      <fileset dir="${build.native}" includes="**/*.properties" />
     </jar>
 
     <!-- mongodb -->
@@ -1213,7 +1311,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.mongodb}" includes="**/*.class" />
-      <fileset dir="${src.mongodb}" includes="**/*.properties" />
+      <fileset dir="${build.mongodb}" includes="**/*.properties" />
     </jar>
 
     <jar jarfile="${lib.dir}/jorphan.jar" manifest="${build.dir}/MANIFEST_BIN.MF">
@@ -1222,7 +1320,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
           fullpath="META-INF/LICENSE" />
       <fileset dir="${build.jorphan}" includes="**/*.class"/>
-      <fileset dir="${src.jorphan}" includes="**/*.properties"/>
+      <fileset dir="${build.jorphan}" includes="**/*.properties"/>
     </jar>
   </target>
 
@@ -1274,7 +1372,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset file="${resources.meta-inf}/default.license"
         fullpath="META-INF/LICENSE" />
       <fileset dir="${build.examples}" includes="**/*.class" />
-      <fileset dir="${src.examples}" includes="**/*.properties" />
+      <fileset dir="${build.examples}" includes="**/*.properties" />
     </jar>
   </target>
 
@@ -1697,6 +1795,7 @@ run JMeter unless all the JMeter jars are added.
       <zipfileset dir="${dest.jar.jmeter}" prefix="bin" includes="log4j2.xml"/>
       <zipfileset dir="${dest.jar.jmeter}" prefix="bin" includes="proxyserver.jks"/>
       <zipfileset dir="${dest.jar.jmeter}" prefix="bin" includes="users.dtd"/>
+      <zipfileset dir="${dest.jar.jmeter}" prefix="bin" includes="templates/templates.dtd"/>
       <zipfileset dir="${dest.jar.jmeter}" prefix="bin" includes="users.xml"/>
       <zipfileset dir="${dest.jar.jmeter}" prefix="bin" includes="report-template/**/*.*" />
     </jar>
@@ -2122,7 +2221,7 @@ run JMeter unless all the JMeter jars are added.
               fork="true"
               dir="${basedir}"
               failonerror="true">
-          <jvmarg value="-Xmx512m"/>
+          <jvmarg value="-Xmx256m"/>
           <classpath>
             <fileset dir="${maven.home}/boot">
               <include name="*.jar" />
@@ -2364,7 +2463,7 @@ run JMeter unless all the JMeter jars are added.
   </target>
 
 <!--
-    Utility target to create MD5 checksums in standard format (with *filename)
+    Utility target to create SHA-512 checksums in standard format (with *filename)
     Usage:
     <antcall target="_hash">
         <param name="path" value="archive.jar|zip|gz"/>
@@ -2616,6 +2715,10 @@ run JMeter unless all the JMeter jars are added.
             <path refid="logging.classpath"/>
           </classpath>
           <jvmarg value="${jacoco_params}batchtest:daemon:java(server)"/>
+          <jvmarg value="-Xms64m"/>
+          <jvmarg value="-Xmx128m"/>
+          <jvmarg value="-Xss256k"/>
+          <jvmarg value="-XX:MaxMetaspaceSize=128m"/>
           <sysproperty key="java.awt.headless" value="true"/>
           <!-- Bug 59723 -->
           <!-- pick up default properties -->
@@ -2726,6 +2829,10 @@ run JMeter unless all the JMeter jars are added.
         <path refid="classpath"/>
         <path refid="logging.classpath"/>
       </classpath>
+      <jvmarg value="-Xms64m"/>
+      <jvmarg value="-Xmx128m"/>
+      <jvmarg value="-Xss256k"/>
+      <jvmarg value="-XX:MaxMetaspaceSize=128m"/>
       <jvmarg value="${jacoco_params}batchtest:java(${taskname})"/>
       <jvmarg value="-Djava.rmi.server.hostname=${computer.hostname}" if:set="rmi_force_localhost"/>
       <!-- Detect if non-GUI runs OK headless by forcing it to try using non-headless mode -->
@@ -2819,6 +2926,16 @@ run JMeter unless all the JMeter jars are added.
 
   <!-- Additional test scripts -->
   <target name="batch_scripts">
+      <antcall target="batchtest">
+        <param name="batchtest.name" value="BUG_62847"/>
+        <param name="batchtest.jmx" value="BUG_62847.jmx"/>
+      </antcall>
+      
+      <antcall target="batchtest">
+        <param name="batchtest.name" value="TestResultStatusAction"/>
+        <param name="batchtest.jmx" value="TestResultStatusAction.jmx"/>
+      </antcall>
+
       <antcall target="batchtest">
         <param name="batchtest.name" value="TestRedirectionPolicies"/>
         <param name="batchtest.jmx" value="TestRedirectionPolicies.jmx"/>
@@ -3081,6 +3198,8 @@ run JMeter unless all the JMeter jars are added.
         <path refid="classpath"/>
         <path refid="logging.classpath"/>
       </classpath>
+      <jvmarg value="-Xss256k"/>
+      <jvmarg value="-XX:MaxMetaspaceSize=256m"/>
       <jvmarg value="-server"/>
       <jvmarg value="${jacoco_params}_test:java"/>
       <jvmarg value="-Dfile.encoding=${test.encoding}"/>
@@ -3225,15 +3344,15 @@ run JMeter unless all the JMeter jars are added.
         <param name="loc" value="${@{jarname}.loc}"/>
         <param name="jar" value="${@{jarname}.jar}"/>
         <param name="path" value="@{dest.dir}"/>
-        <param name="md5"  value="${@{jarname}.md5}"/>
-        <param name="_checkMD5" value="true"/>
+        <param name="sha512"  value="${@{jarname}.sha512}"/>
+        <param name="_checkSHA512" value="true"/>
       </antcall>
       <antcall target="_check_jarfile">
         <param name="loc" value="${@{jarname}.loc}"/>
         <param name="jar" value="${@{jarname}.jar}"/>
         <param name="path" value="@{dest.dir}"/>
-        <param name="md5"  value="${@{jarname}.md5}"/>
-        <param name="_checkMD5" value="true"/>
+        <param name="sha512"  value="${@{jarname}.sha512}"/>
+        <param name="_checkSHA512" value="true"/>
         <param name="zip" value="${@{jarname}.zip}"/>
         <param name="ent" value="${@{jarname}.ent}"/>
         <param name="zipprop" value="@{jarname}.zip"/>
@@ -3262,7 +3381,7 @@ run JMeter unless all the JMeter jars are added.
         <tokenfilter>
           <filetokenizer/>
           <!-- Replace version with a wildcard. e.g, foo-1.2.3.jar or foo-1.2.3.RELEASE.jar to foo-*.jar -->
-          <replaceregex pattern="-(\d+\.){2,}([A-Za-z]+\.)?(jar|zip)" replace="-*\2"/>
+          <replaceregex pattern="-(\d+\.){2,}([A-Za-z]*)[-|\d]*?\.(jar|zip)" replace="-*\2"/>
         </tokenfilter>
       </filterchain>
     </loadresource>
@@ -3288,10 +3407,10 @@ run JMeter unless all the JMeter jars are added.
       <!-- This requires Ant 1.7.0 or later -->
       <mapper type="flatten"/>
     </unzip>
-    <antcall target="_checkMD5">
+    <antcall target="_checkSHA512">
       <param name="file" value="${ent}"/>
       <param name="path" value="${build.dir}"/>
-      <param name="md5"  value="${md5}"/>
+      <param name="sha512"  value="${sha512}"/>
     </antcall>
     <move preservelastmodified="true" overwrite="true"
           file="${build.dir}/${ent}" tofile="${path}/${jar}" verbose="true"/>
@@ -3303,28 +3422,28 @@ run JMeter unless all the JMeter jars are added.
     <get src="${loc}/${jar}"
          dest="${build.dir}/${jar}"
          usetimestamp="false" ignoreerrors="false"/>
-    <antcall target="_checkMD5">
+    <antcall target="_checkSHA512">
       <param name="file" value="${jar}"/>
       <param name="path" value="${build.dir}"/>
-      <param name="md5"  value="${md5}"/>
+      <param name="sha512"  value="${sha512}"/>
     </antcall>
     <move preservelastmodified="true" overwrite="true"
           file="${build.dir}/${jar}" tofile="${path}/${jar}" verbose="true"/>
   </target>
 
-  <!-- Ant subroutine, required to localise MD5OK property -->
-  <target name="_checkMD5" if="_checkMD5">
+  <!-- Ant subroutine, required to localise SHA512OK property -->
+  <target name="_checkSHA512" if="_checkSHA512">
     <!--
     @param path - location of file
     @param file - file name
     -->
-    <checksum algorithm="MD5" file="${path}/${file}" property="MD5"/>
-    <condition property="MD5OK">
-      <equals arg1="${MD5}" arg2="${md5}" casesensitive="false"/>
+    <checksum algorithm="SHA-512" file="${path}/${file}" property="SHA512"/>
+    <condition property="SHA512OK">
+      <equals arg1="${SHA512}" arg2="${sha512}" casesensitive="false"/>
     </condition>
-    <fail unless="MD5OK">Bad Checksum: for ${file}
-        expected ${md5}
-        actual   ${MD5}</fail>
+    <fail unless="SHA512OK">Bad Checksum: for ${file}
+        expected ${sha512}
+        actual   ${SHA512}</fail>
     <echo level="info" message="Checksum OK: ${file}"/>
   </target>
 
@@ -3354,6 +3473,7 @@ run JMeter unless all the JMeter jars are added.
     <process_jarfile jarname="commons-math3"/>
     <process_jarfile jarname="commons-net"/>
     <process_jarfile jarname="commons-pool2"/>
+    <process_jarfile jarname="commons-text"/>
     <process_jarfile jarname="darcula"/>
     <process_jarfile jarname="dnsjava"/>
     <process_jarfile jarname="freemarker"/>
@@ -3366,6 +3486,9 @@ run JMeter unless all the JMeter jars are added.
     <process_jarfile jarname="httpcore-nio"/>
     <process_jarfile jarname="httpmime"/>
     <process_jarfile jarname="jakarta-oro"/>
+    <process_jarfile jarname="jackson-annotations"/>
+    <process_jarfile jarname="jackson-core"/>
+    <process_jarfile jarname="jackson-databind"/>
     <process_jarfile jarname="javamail"/>
     <process_jarfile jarname="jcharts"/>
     <process_jarfile jarname="jdom" dest.dir="${lib.doc}"/>
@@ -3387,7 +3510,6 @@ run JMeter unless all the JMeter jars are added.
     <process_jarfile jarname="rsyntaxtextarea"/>
     <process_jarfile jarname="serializer"/>
     <process_jarfile jarname="slf4j-api"/>
-    <process_jarfile jarname="slf4j-ext"/>
     <process_jarfile jarname="jcl-over-slf4j"/>
     <process_jarfile jarname="log4j-api"/>
     <process_jarfile jarname="log4j-1.2-api"/>
@@ -3464,7 +3586,9 @@ run JMeter unless all the JMeter jars are added.
       <fileset dir="${lib.dir}" includes="htmllexer-2.1.jar htmlparser-2.1.jar"/>
       <!-- tidy up unused logkit jars -->
       <fileset dir="${lib.dir}" includes="logkit-2.0.jar"/>
-      <fileset dir="${lib.opt}" includes="org.jacoco.ant-0.7.8-nodeps.jar"/>
+      <fileset dir="${lib.opt}" includes="org.jacoco.ant-*-nodeps.jar" excludes="${jacocoant.jar}"/>
+      <!-- tidy up unused slf4j-ext jar -->
+      <fileset dir="${lib.dir}" includes="slf4j-ext-1.7.25.jar" />
     </delete>
     <antcall target="_process_all_jars">
         <param name="_get_file" value="true"/>
@@ -3565,10 +3689,10 @@ run JMeter unless all the JMeter jars are added.
     <fail message="Invalid call sequence - file.exists should not be defined" if="file.exists"/>
     <available file="${file}" property="file.exists"/>
     <fail message="Could not find file ${file}" unless="file.exists"/>
-    <antcall target="_checkMD5">
+    <antcall target="_checkSHA512">
       <param name="file" value="${jar}"/>
       <param name="path" value="${path}"/>
-      <param name="md5"  value="${md5}"/>
+      <param name="sha512"  value="${sha512}"/>
     </antcall>
     <!--echo level="info" message="Found ${file}"/-->
   </target>

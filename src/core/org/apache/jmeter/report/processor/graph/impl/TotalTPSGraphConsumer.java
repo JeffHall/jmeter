@@ -37,7 +37,7 @@ import org.apache.jmeter.report.processor.graph.TimeStampKeysSelector;
  * The class TotalTPSGraphConsumer provides a graph to visualize transactions
  * rate per second.
  *
- * @since 4.1
+ * @since 5.0
  */
 public class TotalTPSGraphConsumer extends AbstractOverTimeGraphConsumer {
 
@@ -91,9 +91,6 @@ public class TotalTPSGraphConsumer extends AbstractOverTimeGraphConsumer {
     @Override
     public void setGranularity(long granularity) {
         super.setGranularity(granularity);
-        // Override the granularity of the aggregators factory
-        ((TimeRateAggregatorFactory) getGroupInfos().get(AbstractGraphConsumer.DEFAULT_GROUP).getAggregatorFactory())
-                .setGranularity(granularity);
     }
     
     @Override
@@ -103,6 +100,14 @@ public class TotalTPSGraphConsumer extends AbstractOverTimeGraphConsumer {
                 TRANSACTION_SUCCESS_LABEL, TRANSACTION_FAILURE_LABEL
         };
         initializeSeries(parentResult, seriesLabels);
+    }
+    
+    @Override
+    public void initialize() {
+        super.initialize();
+        // Override the granularity of the aggregators factory
+        ((TimeRateAggregatorFactory) getGroupInfos().get(AbstractGraphConsumer.DEFAULT_GROUP).getAggregatorFactory())
+        .setGranularity(getGranularity());
     }
     
 

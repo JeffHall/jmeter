@@ -18,15 +18,16 @@
 
 package org.apache.jmeter.control;
 
+import org.apache.jmeter.engine.event.LoopIterationListener;
 import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.threads.JMeterVariables;
 import org.apache.jmeter.util.JMeterUtils;
 
 /**
  * Identify controller that does iterations
- * @since 4.1
+ * @since 5.0
  */
-public interface IteratingController {
+public interface IteratingController extends LoopIterationListener {
     
     /**
      * Start next iteration ("continue" keyword equivalent in loops)

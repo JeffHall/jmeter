@@ -20,6 +20,7 @@ package org.apache.jmeter.control;
 
 import java.io.Serializable;
 
+import org.apache.jmeter.engine.event.LoopIterationEvent;
 import org.apache.jmeter.gui.GUIMenuSortOrder;
 import org.apache.jmeter.samplers.Sampler;
 import org.apache.jmeter.testelement.property.BooleanProperty;
@@ -166,8 +167,8 @@ public class ForeachController extends GenericController implements Serializable
         if (currentVariable != null) {
             variables.putObject(getReturnVal(), currentVariable);
             if (log.isDebugEnabled()) {
-                log.debug("{} : Found in vars:{}, isDone:{}", 
-                        getName(), inputVariable, false);
+                log.debug("{} : Found in vars:{}, isDone:{}",
+                        getName(), inputVariable, Boolean.FALSE);
 
             }
             return false;
@@ -198,6 +199,7 @@ public class ForeachController extends GenericController implements Serializable
     // Prevent entry if nothing to do
     @Override
     public Sampler next() {
+        updateIterationIndex(getName(), loopCount);
         try {
             if (breakLoop || emptyList()) {
                 resetBreakLoop();
@@ -317,5 +319,11 @@ public class ForeachController extends GenericController implements Serializable
         resetCurrent();
         resetLoopCount();
         recoverRunningVersion();
+    }
+
+    @Override
+    public void iterationStart(LoopIterationEvent iterEvent) {
+        reInitialize();
+        resetLoopCount();
     }
 }
